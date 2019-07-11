@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 class Nav extends Component {
   render() {
 
-    const { isAuthenticated, logout, login } = this.props.auth;
+    const { isAuthenticated, userHasScopes, logout, login } = this.props.auth;
 
     return (
       <nav>
@@ -22,6 +22,13 @@ class Nav extends Component {
             isAuthenticated() &&
             <li>
               <Link to="/private">Private</Link>
+            </li>
+          }
+          {
+            isAuthenticated() &&
+                userHasScopes(['read:courses']) &&
+            <li>
+              <Link to="/course">Courses</Link>
             </li>
           }
           <li>

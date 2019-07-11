@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config();
 const jwt = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
+const checkScope = require('express-jwt-authz');
 
 const checkJwt = jwt({
     // Dynamically provide a signing key based on the kid in the header
@@ -23,6 +24,16 @@ const checkJwt = jwt({
     algorithms: ["RS256"]
 });
 
+function checkRole(role)  {
+    return function(req, res, next) {
+        const assignedRoles = req.user['http://localhost:3000/roles'];
+        if (Array.isArray(assignedRoles) && assignedRoles.includes(role)) {
+            return next();
+        } else {
+            return res.status(401).send('Insufficient role');
+        }
+    }
+}
 
 const app = express();
 
@@ -35,6 +46,21 @@ app.get('/public', (req, res) => {
 app.get('/private', checkJwt, (req, res) => {
     res.json({
         message: 'Hello from a private API'
+    })
+});
+
+app.get('/course', checkJwt, checkScope(['read:courses']), (req, res) => {
+    res.json({
+        courses: [
+            { id: 1, title: 'Building Apps with React and Redux'},
+            { id: 2, title: 'Creating Reusable React Components'}
+        ]
+    })
+});
+
+app.get('/admin', checkJwt, checkRole('admin'), (req, res) => {
+    res.json({
+        message: 'Hello from an admin API'
     })
 });
 
